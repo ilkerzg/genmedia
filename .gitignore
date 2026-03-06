@@ -1,0 +1,15 @@
+# Binary (root only, not cmd/ or npm/)
+/genmedia
+dist/
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Environment
+.env
+.env.*

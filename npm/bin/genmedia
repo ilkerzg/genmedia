@@ -1,0 +1,147 @@
+#!/usr/bin/env node
+
+"use strict";
+
+const { execFileSync, execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const https = require("https");
+const os = require("os");
+const REPO = "ilkerzg/genmedia";
+const BIN_NAME = "genmedia";
+
+function getPlatform() {
+  const platform = os.platform();
+  const arch = os.arch();
+
+  const platformMap = {
+    darwin: "darwin",
+    linux: "linux",
+  };
+
+  const archMap = {
+    x64: "amd64",
+    arm64: "arm64",
+  };
+
+  const goPlatform = platformMap[platform];
+  const goArch = archMap[arch];
+
+  if (!goPlatform || !goArch) {
+    console.error(
+      `Unsupported platform: ${platform}/${arch}. genmedia supports darwin/linux on amd64/arm64.`
+    );
+    process.exit(1);
+  }
+
+  return { platform: goPlatform, arch: goArch };
+}
+
+function getBinDir() {
+  const dir = path.join(os.homedir(), ".cache", "genmedia", "bin");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function getBinPath() {
+  return path.join(getBinDir(), BIN_NAME);
+}
+
+function getVersionFile() {
+  return path.join(getBinDir(), ".version");
+}
+
+function fetch(url) {
+  return new Promise((resolve, reject) => {
+    const get = (url, redirects) => {
+      if (redirects > 5) return reject(new Error("Too many redirects"));
+      https
+        .get(url, { headers: { "User-Agent": "genmedia-npm" } }, (res) => {
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            return get(res.headers.location, redirects + 1);
+          }
+          if (res.statusCode !== 200) {
+            return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
+          }
+          const chunks = [];
+          res.on("data", (c) => chunks.push(c));
+          res.on("end", () => resolve(Buffer.concat(chunks)));
+          res.on("error", reject);
+        })
+        .on("error", reject);
+    };
+    get(url, 0);
+  });
+}
+
+async function getLatestVersion() {
+  const data = await fetch(
+    `https://api.github.com/repos/${REPO}/releases/latest`
+  );
+  const release = JSON.parse(data.toString());
+  return release.tag_name;
+}
+
+async function downloadBinary(version) {
+  const { platform, arch } = getPlatform();
+  const tag = version.replace(/^v/, "");
+  const assetName = `${BIN_NAME}_${platform}_${arch}.tar.gz`;
+  const url = `https://github.com/${REPO}/releases/download/${version}/${assetName}`;
+
+  process.stderr.write(`Downloading genmedia ${version} (${platform}/${arch})...\n`);
+
+  const tarball = await fetch(url);
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "genmedia-"));
+  const tarPath = path.join(tmpDir, assetName);
+  fs.writeFileSync(tarPath, tarball);
+
+  // Extract using tar
+  execSync(`tar -xzf "${tarPath}" -C "${tmpDir}"`, { stdio: "pipe" });
+
+  const extractedBin = path.join(tmpDir, BIN_NAME);
+  if (!fs.existsSync(extractedBin)) {
+    console.error("Failed to extract binary from release archive.");
+    process.exit(1);
+  }
+
+  const binPath = getBinPath();
+  fs.copyFileSync(extractedBin, binPath);
+  fs.chmodSync(binPath, 0o755);
+
+  // Save version
+  fs.writeFileSync(getVersionFile(), version);
+
+  // Cleanup
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+
+  process.stderr.write(`Installed genmedia ${version}\n`);
+}
+
+async function ensureBinary() {
+  const binPath = getBinPath();
+  if (fs.existsSync(binPath)) {
+    return binPath;
+  }
+
+  const version = await getLatestVersion();
+  await downloadBinary(version);
+  return binPath;
+}
+
+async function main() {
+  try {
+    const binPath = await ensureBinary();
+    const result = execFileSync(binPath, process.argv.slice(2), {
+      stdio: "inherit",
+      env: process.env,
+    });
+  } catch (err) {
+    if (err.status != null) {
+      process.exit(err.status);
+    }
+    console.error(err.message);
+    process.exit(1);
+  }
+}
+
+main();

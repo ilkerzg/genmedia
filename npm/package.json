@@ -1,0 +1,38 @@
+{
+  "name": "genmedia",
+  "version": "0.1.0-beta",
+  "description": "AI media generation CLI powered by fal.ai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ilkerzg/genmedia"
+  },
+  "homepage": "https://github.com/ilkerzg/genmedia",
+  "author": "ilkerzg",
+  "bin": {
+    "genmedia": "bin/genmedia"
+  },
+  "files": [
+    "bin/"
+  ],
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "keywords": [
+    "ai",
+    "media",
+    "image",
+    "video",
+    "generation",
+    "fal",
+    "cli"
+  ]
+}

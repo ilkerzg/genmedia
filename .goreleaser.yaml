@@ -1,0 +1,33 @@
+version: 2
+
+builds:
+  - main: ./cmd/genmedia
+    binary: genmedia
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+brews:
+  - repository:
+      owner: ilkerzg
+      name: homebrew-tap
+    name: genmedia
+    homepage: "https://github.com/ilkerzg/genmedia"
+    description: "AI media generation CLI powered by fal.ai"
+    license: "MIT"
+    install: |
+      bin.install "genmedia"
