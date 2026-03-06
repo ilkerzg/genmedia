@@ -378,12 +378,6 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, cmd
 
-	case loginBrowserMsg:
-		// WIP: browser login not yet supported
-		m.chat.AddSystemMessage("Browser login is not yet supported. Use \"Enter API key manually\" or set FAL_KEY env var.")
-		cmd := m.input.Focus()
-		return m, cmd
-
 	case loginManualKeyMsg:
 		// Show choice picker with "Other..." to get the key
 		ch := make(chan string, 1)
@@ -674,38 +668,25 @@ func (m *AppModel) handleLoginCommand() tea.Cmd {
 		return nil
 	}
 
-	// Show login method options
-	options := []string{
-		"Log in with browser",
-		"Enter API key manually",
-	}
-
+	// Prompt for API key
 	ch := make(chan string, 1)
-	m.choice.Show("How would you like to log in?", options, ch)
+	m.choice.Show("Paste your API key (from fal.ai/dashboard/keys):", []string{"Enter API key"}, ch)
 	m.input.Blur()
 
 	return func() tea.Msg {
 		answer := <-ch
-		if answer == "" {
-			return LoginResultMsg{Err: fmt.Errorf("cancelled")}
-		}
-		switch {
-		case strings.HasPrefix(answer, "Log in with browser"):
-			return loginBrowserMsg{}
-		case answer == "Enter API key manually":
+		if answer == "" || answer == "Enter API key" {
 			return loginManualKeyMsg{}
-		default:
-			// "Other..." — treat as a pasted API key
-			key := strings.TrimSpace(answer)
-			if err := auth.SaveAuthKey(key); err != nil {
-				return LoginResultMsg{Err: err}
-			}
-			return LoginResultMsg{Key: auth.GetCredentials()}
 		}
+		// Treat any typed/pasted value as an API key
+		key := strings.TrimSpace(answer)
+		if err := auth.SaveAuthKey(key); err != nil {
+			return LoginResultMsg{Err: err}
+		}
+		return LoginResultMsg{Key: auth.GetCredentials()}
 	}
 }
 
-type loginBrowserMsg struct{}
 type loginManualKeyMsg struct{}
 
 // startGeneration launches the SSE stream in a goroutine.
