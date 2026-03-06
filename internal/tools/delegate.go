@@ -8,13 +8,15 @@ import (
 	"time"
 )
 
-// FindFalDev locates the fal-dev binary.
+// FindFalDev locates the fal or fal-dev binary.
 func FindFalDev() (string, error) {
-	path, err := exec.LookPath("fal-dev")
-	if err != nil {
-		return "", fmt.Errorf("fal-dev not found in PATH: %w", err)
+	if path, err := exec.LookPath("fal"); err == nil {
+		return path, nil
 	}
-	return path, nil
+	if path, err := exec.LookPath("fal-dev"); err == nil {
+		return path, nil
+	}
+	return "", fmt.Errorf("fal CLI not found in PATH (install: pip install fal)")
 }
 
 // RunCLI runs a fal-dev CLI command in agent mode and returns parsed JSON.
