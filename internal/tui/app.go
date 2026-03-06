@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -380,24 +379,10 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case loginBrowserMsg:
-		falPath, err := auth.FindFalBinary()
-		if err != nil {
-			m.chat.AddSystemMessage("fal CLI not found. Install it: pip install fal")
-			cmd := m.input.Focus()
-			return m, cmd
-		}
-		c := exec.Command(falPath, "auth", "login")
-		return m, tea.ExecProcess(c, func(err error) tea.Msg {
-			if err != nil {
-				return LoginResultMsg{Err: err}
-			}
-			// fal CLI wrote tokens to ~/.fal/auth0_token, read them
-			creds := auth.GetCredentials()
-			if creds == "" {
-				return LoginResultMsg{Err: fmt.Errorf("login completed but no credentials found")}
-			}
-			return LoginResultMsg{Key: creds}
-		})
+		// WIP: browser login not yet supported
+		m.chat.AddSystemMessage("Browser login is not yet supported. Use \"Enter API key manually\" or set FAL_KEY env var.")
+		cmd := m.input.Focus()
+		return m, cmd
 
 	case loginManualKeyMsg:
 		// Show choice picker with "Other..." to get the key
