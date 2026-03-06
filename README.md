@@ -11,8 +11,7 @@
 </p>
 
 <p align="center">
-  Open source AI media generation from the terminal.<br/>
-  Powered by <a href="https://fal.ai">fal.ai</a>.
+  Open source AI media generation from the terminal.
 </p>
 
 <p align="center">
@@ -21,7 +20,7 @@
 
 ---
 
-Generate images, videos, audio, and more — just describe what you want. genmedia picks the right model, handles the queue, and streams results back to your terminal.
+Generate images, videos, audio, and more. Just describe what you want. genmedia picks the right model, handles the queue, and streams results back to your terminal.
 
 ## Install
 
@@ -56,15 +55,20 @@ genmedia -s last          # resume last session
 genmedia -m anthropic/claude-sonnet-4.6  # use a specific LLM
 ```
 
-Then just type:
+Then just type what you want:
 
 ```
 > a cyberpunk city at sunset, neon reflections on wet streets
-> generate a 10s video of ocean waves
-> create lofi hip-hop background music
+> generate a 10s video of ocean waves crashing on rocks
+> create lofi hip-hop background music, chill vibes
+> remove the background from this image and make it transparent
+> upscale my photo to 4K
+> add cinematic subtitles to my video
+> search for the best anime style image model
+> how much does flux pro cost per image?
 ```
 
-genmedia figures out which model to use, calls it, and renders the output — including inline image previews via [chafa](https://hpjansson.org/chafa/).
+genmedia figures out which model to use, calls it, and renders the output inline via [chafa](https://hpjansson.org/chafa/).
 
 ## Commands
 
@@ -72,11 +76,11 @@ genmedia figures out which model to use, calls it, and renders the output — in
 |---------|-------------|
 | `/model` | Switch LLM |
 | `/search` | Search fal.ai models |
-| `/info` | Model schema & details |
+| `/info` | Model schema and details |
 | `/price` | Check pricing |
 | `/theme` | Switch color theme |
 | `/default` | Set default models per category |
-| `/usage` | Usage & cost |
+| `/usage` | Usage and cost |
 | `/login` | Log in to fal.ai |
 | `/clear` | Clear conversation |
 
@@ -86,13 +90,13 @@ genmedia figures out which model to use, calls it, and renders the output — in
 
 ## How it works
 
-genmedia is a conversational TUI backed by an LLM with tool use. The LLM has access to fal.ai's full model catalog — it can search models, read schemas, submit generation jobs, and stream results. You talk to it naturally and it handles the rest.
+genmedia is a conversational TUI backed by an LLM with tool use. The LLM has access to fal.ai's full model catalog. It can search models, read schemas, submit generation jobs, and stream results. You talk to it naturally and it handles the rest.
 
-Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) + [Lip Gloss](https://github.com/charmbracelet/lipgloss). Single static binary, zero dependencies, ~10ms startup.
+Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lip Gloss](https://github.com/charmbracelet/lipgloss). Single static binary, zero dependencies, ~10ms startup.
 
 ## Contributing
 
-This is an open source side project. Contributions, issues, and ideas are welcome.
+Open source side project. Contributions, issues, and ideas are welcome.
 
 ```bash
 git clone https://github.com/ilkerzg/genmedia
