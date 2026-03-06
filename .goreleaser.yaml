@@ -25,6 +25,7 @@ brews:
   - repository:
       owner: ilkerzg
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     name: genmedia
     homepage: "https://github.com/ilkerzg/genmedia"
     description: "AI media generation CLI powered by fal.ai"

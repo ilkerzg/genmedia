@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://v3b.fal.media/files/b/0a911fb0/5sW-6CopGrEuhioKnGDbd_image.png" width="720" />
+  <img src="https://v3b.fal.media/files/b/0a912003/kLRUpnF9PU8HzIHGx3ylP_image.png" width="720" />
 </p>
 
 <h1 align="center">genmedia</h1>
