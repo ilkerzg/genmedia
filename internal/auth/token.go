@@ -11,6 +11,11 @@ import (
 	"strings"
 )
 
+const (
+	auth0Domain  = "auth.fal.ai"
+	auth0Client  = "TwXR51Vz8JbY8GUUMy6EyuVR0fTO7N4N"
+)
+
 // tokenDir returns the fal auth directory (~/.fal).
 func tokenDir() (string, error) {
 	home, err := os.UserHomeDir()

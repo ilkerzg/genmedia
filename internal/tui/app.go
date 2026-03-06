@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -379,25 +380,24 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case loginBrowserMsg:
-		m.chat.AddSystemMessage("Opening browser for fal.ai login...")
-		prog := m.programRef.p
-		return m, func() tea.Msg {
-			token, err := auth.DeviceCodeLogin(func(status string) {
-				prog.Send(loginStatusMsg{status: status})
-			})
+		falPath, err := auth.FindFalBinary()
+		if err != nil {
+			m.chat.AddSystemMessage("fal CLI not found. Install it: pip install fal")
+			cmd := m.input.Focus()
+			return m, cmd
+		}
+		c := exec.Command(falPath, "auth", "login")
+		return m, tea.ExecProcess(c, func(err error) tea.Msg {
 			if err != nil {
 				return LoginResultMsg{Err: err}
 			}
-			// Save tokens
-			if err := auth.SaveTokens(token.RefreshToken, token.AccessToken); err != nil {
-				return LoginResultMsg{Err: fmt.Errorf("failed to save tokens: %w", err)}
+			// fal CLI wrote tokens to ~/.fal/auth0_token, read them
+			creds := auth.GetCredentials()
+			if creds == "" {
+				return LoginResultMsg{Err: fmt.Errorf("login completed but no credentials found")}
 			}
-			return LoginResultMsg{Key: "Bearer " + token.AccessToken}
-		}
-
-	case loginStatusMsg:
-		m.chat.AddSystemMessage(msg.status)
-		return m, nil
+			return LoginResultMsg{Key: creds}
+		})
 
 	case loginManualKeyMsg:
 		// Show choice picker with "Other..." to get the key
@@ -722,7 +722,6 @@ func (m *AppModel) handleLoginCommand() tea.Cmd {
 
 type loginBrowserMsg struct{}
 type loginManualKeyMsg struct{}
-type loginStatusMsg struct{ status string }
 
 // startGeneration launches the SSE stream in a goroutine.
 func (m *AppModel) handleLogoutCommand() {
