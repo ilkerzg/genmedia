@@ -1,9 +1,14 @@
 package tools
 
-import "time"
+import (
+	"fmt"
+	"net/url"
+)
 
 // ModelInfoTool gets detailed model information including input/output schemas.
-type ModelInfoTool struct{}
+type ModelInfoTool struct {
+	AuthKey string
+}
 
 func (t *ModelInfoTool) Name() string { return "model_info" }
 func (t *ModelInfoTool) Description() string {
@@ -23,7 +28,16 @@ func (t *ModelInfoTool) Parameters() map[string]interface{} {
 
 func (t *ModelInfoTool) Execute(args map[string]interface{}, onProgress func(map[string]interface{})) (map[string]interface{}, error) {
 	endpointID, _ := args["endpoint_id"].(string)
-	result := RunCLI([]string{"info", endpointID}, 120*time.Second)
+
+	params := url.Values{}
+	params.Set("endpoint_id", endpointID)
+	params.Set("expand", "openapi-3.0")
+
+	u := fmt.Sprintf("%s/models?%s", falAPIBase, params.Encode())
+	result, err := apiGetRaw(u, t.AuthKey)
+	if err != nil {
+		return map[string]interface{}{"ok": false, "error": err.Error()}, nil
+	}
 
 	// Resolve $ref in schemas
 	for _, key := range []string{"input_schema", "output_schema"} {
@@ -36,6 +50,7 @@ func (t *ModelInfoTool) Execute(args map[string]interface{}, onProgress func(map
 	delete(result, "definitions")
 	delete(result, "$defs")
 
+	result["ok"] = true
 	return result, nil
 }
 

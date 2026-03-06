@@ -1,11 +1,10 @@
 package tools
 
-import (
-	"fmt"
-	"time"
-)
+import "fmt"
 
-type EstimateCostTool struct{}
+type EstimateCostTool struct {
+	AuthKey string
+}
 
 func (t *EstimateCostTool) Name() string { return "estimate_cost" }
 func (t *EstimateCostTool) Description() string {
@@ -29,9 +28,19 @@ func (t *EstimateCostTool) Parameters() map[string]interface{} {
 
 func (t *EstimateCostTool) Execute(args map[string]interface{}, onProgress func(map[string]interface{})) (map[string]interface{}, error) {
 	endpointID, _ := args["endpoint_id"].(string)
-	cmd := []string{"estimate", endpointID}
-	if qty, ok := args["quantity"].(float64); ok {
-		cmd = append(cmd, "--qty", fmt.Sprintf("%d", int(qty)))
+
+	payload := map[string]interface{}{
+		"endpoint_id": endpointID,
 	}
-	return RunCLI(cmd, 120*time.Second), nil
+	if qty, ok := args["quantity"].(float64); ok {
+		payload["quantity"] = int(qty)
+	}
+
+	u := fmt.Sprintf("%s/models/pricing/estimate", falAPIBase)
+	result, err := apiPost(u, t.AuthKey, payload)
+	if err != nil {
+		return map[string]interface{}{"ok": false, "error": err.Error()}, nil
+	}
+	result["ok"] = true
+	return result, nil
 }

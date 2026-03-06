@@ -1,8 +1,13 @@
 package tools
 
-import "time"
+import (
+	"fmt"
+	"net/url"
+)
 
-type GetPricingTool struct{}
+type GetPricingTool struct {
+	AuthKey string
+}
 
 func (t *GetPricingTool) Name() string { return "get_pricing" }
 func (t *GetPricingTool) Description() string {
@@ -22,5 +27,15 @@ func (t *GetPricingTool) Parameters() map[string]interface{} {
 
 func (t *GetPricingTool) Execute(args map[string]interface{}, onProgress func(map[string]interface{})) (map[string]interface{}, error) {
 	endpointID, _ := args["endpoint_id"].(string)
-	return RunCLI([]string{"pricing", endpointID}, 120*time.Second), nil
+
+	params := url.Values{}
+	params.Set("endpoint_id", endpointID)
+
+	u := fmt.Sprintf("%s/models/pricing?%s", falAPIBase, params.Encode())
+	result, err := apiGetRaw(u, t.AuthKey)
+	if err != nil {
+		return map[string]interface{}{"ok": false, "error": err.Error()}, nil
+	}
+	result["ok"] = true
+	return result, nil
 }

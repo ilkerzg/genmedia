@@ -1,8 +1,13 @@
 package tools
 
-import "time"
+import (
+	"fmt"
+	"net/url"
+)
 
-type SearchModelsTool struct{}
+type SearchModelsTool struct {
+	AuthKey string
+}
 
 func (t *SearchModelsTool) Name() string { return "search_models" }
 func (t *SearchModelsTool) Description() string {
@@ -29,16 +34,24 @@ func (t *SearchModelsTool) Parameters() map[string]interface{} {
 }
 
 func (t *SearchModelsTool) Execute(args map[string]interface{}, onProgress func(map[string]interface{})) (map[string]interface{}, error) {
-	cmd := []string{"search"}
+	params := url.Values{}
+	params.Set("limit", "15")
+
 	if q, ok := args["query"].(string); ok && q != "" {
-		cmd = append(cmd, q)
+		params.Set("q", q)
 	}
 	if c, ok := args["category"].(string); ok && c != "" {
-		cmd = append(cmd, "-c", c)
+		params.Set("category", c)
 	}
 	if s, ok := args["sort"].(string); ok && s != "" {
-		cmd = append(cmd, "-s", s)
+		params.Set("sort", s)
 	}
-	cmd = append(cmd, "-n", "15")
-	return RunCLI(cmd, 120*time.Second), nil
+
+	u := fmt.Sprintf("%s/models?%s", falAPIBase, params.Encode())
+	result, err := apiGetRaw(u, t.AuthKey)
+	if err != nil {
+		return map[string]interface{}{"ok": false, "error": err.Error()}, nil
+	}
+	result["ok"] = true
+	return result, nil
 }

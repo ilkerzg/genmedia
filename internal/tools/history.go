@@ -2,10 +2,12 @@ package tools
 
 import (
 	"fmt"
-	"time"
+	"net/url"
 )
 
-type RequestHistoryTool struct{}
+type RequestHistoryTool struct {
+	AuthKey string
+}
 
 func (t *RequestHistoryTool) Name() string { return "request_history" }
 func (t *RequestHistoryTool) Description() string {
@@ -29,9 +31,21 @@ func (t *RequestHistoryTool) Parameters() map[string]interface{} {
 
 func (t *RequestHistoryTool) Execute(args map[string]interface{}, onProgress func(map[string]interface{})) (map[string]interface{}, error) {
 	endpointID, _ := args["endpoint_id"].(string)
-	cmd := []string{"history", endpointID}
-	if limit, ok := args["limit"].(float64); ok {
-		cmd = append(cmd, "-n", fmt.Sprintf("%d", int(limit)))
+
+	params := url.Values{}
+	params.Set("endpoint_id", endpointID)
+
+	limit := 20
+	if l, ok := args["limit"].(float64); ok {
+		limit = int(l)
 	}
-	return RunCLI(cmd, 120*time.Second), nil
+	params.Set("limit", fmt.Sprintf("%d", limit))
+
+	u := fmt.Sprintf("%s/models/requests/by-endpoint?%s", falAPIBase, params.Encode())
+	result, err := apiGetRaw(u, t.AuthKey)
+	if err != nil {
+		return map[string]interface{}{"ok": false, "error": err.Error()}, nil
+	}
+	result["ok"] = true
+	return result, nil
 }

@@ -1,8 +1,13 @@
 package tools
 
-import "time"
+import (
+	"fmt"
+	"net/url"
+)
 
-type ListWorkflowsTool struct{}
+type ListWorkflowsTool struct {
+	AuthKey string
+}
 
 func (t *ListWorkflowsTool) Name() string { return "list_workflows" }
 func (t *ListWorkflowsTool) Description() string {
@@ -20,9 +25,18 @@ func (t *ListWorkflowsTool) Parameters() map[string]interface{} {
 }
 
 func (t *ListWorkflowsTool) Execute(args map[string]interface{}, onProgress func(map[string]interface{})) (map[string]interface{}, error) {
-	cmd := []string{"workflows"}
+	params := url.Values{}
+	params.Set("limit", "20")
+
 	if q, ok := args["query"].(string); ok && q != "" {
-		cmd = append(cmd, q)
+		params.Set("search", q)
 	}
-	return RunCLI(cmd, 120*time.Second), nil
+
+	u := fmt.Sprintf("%s/workflows?%s", falAPIBase, params.Encode())
+	result, err := apiGetRaw(u, t.AuthKey)
+	if err != nil {
+		return map[string]interface{}{"ok": false, "error": err.Error()}, nil
+	}
+	result["ok"] = true
+	return result, nil
 }

@@ -1,8 +1,10 @@
 package tools
 
-import "time"
+import "fmt"
 
-type ListFilesTool struct{}
+type ListFilesTool struct {
+	AuthKey string
+}
 
 func (t *ListFilesTool) Name() string { return "list_files" }
 func (t *ListFilesTool) Description() string {
@@ -20,9 +22,16 @@ func (t *ListFilesTool) Parameters() map[string]interface{} {
 }
 
 func (t *ListFilesTool) Execute(args map[string]interface{}, onProgress func(map[string]interface{})) (map[string]interface{}, error) {
-	cmd := []string{"files"}
+	path := ""
 	if p, ok := args["path"].(string); ok && p != "" {
-		cmd = append(cmd, p)
+		path = p
 	}
-	return RunCLI(cmd, 120*time.Second), nil
+
+	u := fmt.Sprintf("%s/files/list/%s", falRESTBase, path)
+	result, err := apiGetRaw(u, t.AuthKey)
+	if err != nil {
+		return map[string]interface{}{"ok": false, "error": err.Error()}, nil
+	}
+	result["ok"] = true
+	return result, nil
 }
